@@ -1,0 +1,8 @@
+﻿.vs
+GeomWorld/bin
+GeomWorld/obj
+GeomWorld/Properties
+*.resx
+GeomWorld/GeomWorld.csproj.user
+*.csproj
+*.sln
