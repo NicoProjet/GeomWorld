@@ -334,12 +334,15 @@ namespace GeomWorld
             g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
             Pen pen = new Pen(Color.Black);
             g.DrawRectangles(pen, forms.Select(x => x.Rect).ToArray());
-            foreach(TalkingHeads.DataStructures.Form form in forms)
+            StringFormat format = new StringFormat();
+            format.Alignment = StringAlignment.Center;
+            format.LineAlignment = StringAlignment.Center;
+            foreach (TalkingHeads.DataStructures.Form form in forms)
             {
                 Point pt = form.GetCenter();
                 Rectangle rect = new Rectangle(pt.X - (Configuration.SizeOfIdRectangle/2), pt.Y - (Configuration.SizeOfIdRectangle / 2), Configuration.SizeOfIdRectangle, Configuration.SizeOfIdRectangle);
                 g.FillRectangle(Brushes.White, rect);
-                g.DrawString("" + form.ID, new Font("Tahoma", 10), Brushes.Black, rect);
+                g.DrawString("" + form.ID, new Font("Tahoma", 10), Brushes.Black, rect, format);
             }
 
             PictureBox1.Image = bmp;
