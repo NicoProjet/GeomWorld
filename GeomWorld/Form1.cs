@@ -327,10 +327,20 @@ namespace GeomWorld
         private void ShowSegmentation()
         {
             Bitmap bmp = DrawControlToBitmap(PictureBox1);
-            List<Rectangle> segments = Eyes.FindForms(bmp);
+            List<TalkingHeads.DataStructures.Form> forms = Eyes.FindForms(bmp, ImageFormat.Bmp);
             Graphics g = Graphics.FromImage(bmp);
+            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+            g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
             Pen pen = new Pen(Color.Black);
-            g.DrawRectangles(pen, segments.ToArray());
+            g.DrawRectangles(pen, forms.Select(x => x.Rect).ToArray());
+            foreach(TalkingHeads.DataStructures.Form form in forms)
+            {
+                Point pt = form.GetCenter();
+                Rectangle rect = new Rectangle(pt.X - (Configuration.SizeOfIdRectangle/2), pt.Y - (Configuration.SizeOfIdRectangle / 2), Configuration.SizeOfIdRectangle, Configuration.SizeOfIdRectangle);
+                g.FillRectangle(Brushes.White, rect);
+                g.DrawString("" + form.ID, new Font("Tahoma", 10), Brushes.Black, rect);
+            }
 
             PictureBox1.Image = bmp;
         }
