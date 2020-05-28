@@ -173,7 +173,7 @@ namespace GeomWorld
             OpenFileDialog1.Filter = "JPeg Image|*.jpg|Bitmap Image|*.bmp|Png Image|*.png";
             OpenFileDialog1.Title = "Load an Image File";
             OpenFileDialog1.ShowDialog();
-            PictureBox1.Image = Image.FromFile(OpenFileDialog1.FileName);
+            if (OpenFileDialog1.FileName != "") PictureBox1.Image = Image.FromFile(OpenFileDialog1.FileName);
         }
 
         private void PictureBox1_Paint(object sender, PaintEventArgs e)
@@ -350,9 +350,12 @@ namespace GeomWorld
 
         private void Test()
         {
+            Bitmap bmp = DrawControlToBitmap(PictureBox1);
+
             // Scaling
             TalkingHead th = new TalkingHead();
-            Brain.GetDiscriminationTrees(th, Memory.LoadImageToBmp("C:\\Users\\Nicolas Feron\\Pictures\\TalkingHeads\\" + "1.bmp"), ImageFormat.Bmp);
+            string guess = Brain.DiscriminationGameDescription(th, bmp, ImageFormat.Bmp, true);
+            Console.WriteLine(guess);
         }
 
         private void Form1_KeyDown(object sender, KeyEventArgs e)
