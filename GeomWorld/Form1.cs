@@ -9,6 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using TalkingHeads;
 using TalkingHeads.BodyParts;
 
 namespace GeomWorld
@@ -130,7 +131,7 @@ namespace GeomWorld
                 do
                 {
                     width = (int)(MinFormWidth + (rand.NextDouble() * (MaxFormWidth - MinFormWidth)));
-                    height = (int)(MinFormWidth + (rand.NextDouble() * (MaxFormWidth - MinFormWidth)));
+                    height = (int)(MinFormHeight + (rand.NextDouble() * (MaxFormHeight - MinFormHeight)));
 
                     x = (int)(rand.NextDouble() * (this.PictureBox1.Width - width));
                     y = (int)(rand.NextDouble() * (this.PictureBox1.Height - height));
@@ -334,6 +335,13 @@ namespace GeomWorld
             PictureBox1.Image = bmp;
         }
 
+        private void Test()
+        {
+            // Scaling
+            TalkingHead th = new TalkingHead();
+            Brain.GetDiscriminationTrees(th, Memory.LoadImageToBmp("C:\\Users\\Nicolas Feron\\Pictures\\TalkingHeads\\" + "1.bmp"), ImageFormat.Bmp);
+        }
+
         private void Form1_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Control && e.KeyCode == Keys.S) // Ctrl+S
@@ -359,6 +367,11 @@ namespace GeomWorld
             else if (e.Control && e.KeyCode == Keys.L)
             {
                 PictureBox1_LoadImage();
+                e.SuppressKeyPress = true;
+            }
+            else if (e.Control && e.KeyCode == Keys.T)
+            {
+                Test();
                 e.SuppressKeyPress = true;
             }
         }
