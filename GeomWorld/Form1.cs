@@ -23,6 +23,8 @@ namespace GeomWorld
     
     public partial class Form1 : Form
     {
+        TalkingHead th = null;
+        string description = "";
         public Form1()
         {
             InitializeComponent();
@@ -348,15 +350,37 @@ namespace GeomWorld
             PictureBox1.Image = bmp;
         }
 
-        private void Test()
+        private void LoadTalkingHead()
+        {
+            if (th == null)
+            {
+                th = new TalkingHead("Albert", true);
+            }
+        }
+
+        private void SaveTalkingHead()
+        {
+            if (th != null)
+            {
+                Memory.SaveTalkingHead(th);
+            }
+        }
+
+        private void DescribeForm()
         {
             Bitmap bmp = DrawControlToBitmap(PictureBox1);
 
-            // Scaling
-            TalkingHead th = new TalkingHead("Albert", true);
+            LoadTalkingHead();
             string guess = Brain.DiscriminationGameDescription(th, bmp, ImageFormat.Bmp, true);
-            Memory.SaveTalkingHead(th);
-            Console.WriteLine(guess);
+            description = guess;
+        }
+
+        private void MakeGuess()
+        {
+            Bitmap bmp = DrawControlToBitmap(PictureBox1);
+
+            LoadTalkingHead();
+            int IDForm = Brain.DiscriminationGameGuessID(th, bmp, ImageFormat.Bmp, description, true);
         }
 
         private void Form1_KeyDown(object sender, KeyEventArgs e)
@@ -388,7 +412,17 @@ namespace GeomWorld
             }
             else if (e.Control && e.KeyCode == Keys.T)
             {
-                Test();
+                DescribeForm();
+                e.SuppressKeyPress = true;
+            }
+            else if (e.Control && e.KeyCode == Keys.Y)
+            {
+                SaveTalkingHead();
+                e.SuppressKeyPress = true;
+            }
+            else if (e.Control && e.KeyCode == Keys.U)
+            {
+                MakeGuess();
                 e.SuppressKeyPress = true;
             }
         }
