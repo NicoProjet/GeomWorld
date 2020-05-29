@@ -353,8 +353,9 @@ namespace GeomWorld
             Bitmap bmp = DrawControlToBitmap(PictureBox1);
 
             // Scaling
-            TalkingHead th = new TalkingHead();
+            TalkingHead th = new TalkingHead("Albert", true);
             string guess = Brain.DiscriminationGameDescription(th, bmp, ImageFormat.Bmp, true);
+            Memory.SaveTalkingHead(th);
             Console.WriteLine(guess);
         }
 
