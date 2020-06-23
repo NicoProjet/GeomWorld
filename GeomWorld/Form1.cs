@@ -356,6 +356,11 @@ namespace GeomWorld
             {
                 th = new TalkingHead("Albert", true);
             }
+            else
+            {
+                Memory.LoadTalkingHead(th);
+            }
+            Console.WriteLine("Loaded Talking Head '" + th.Name + "'");
         }
 
         private void SaveTalkingHead()
@@ -364,13 +369,14 @@ namespace GeomWorld
             {
                 Memory.SaveTalkingHead(th);
             }
+            Console.WriteLine("Saved Talking Head '" + th.Name + "'");
         }
 
         private void DescribeForm()
         {
             Bitmap bmp = DrawControlToBitmap(PictureBox1);
 
-            LoadTalkingHead();
+            if (th == null) LoadTalkingHead();
             string guess = Brain.DiscriminationGameDescription(th, bmp, ImageFormat.Bmp, true);
             description = guess;
         }
@@ -379,7 +385,7 @@ namespace GeomWorld
         {
             Bitmap bmp = DrawControlToBitmap(PictureBox1);
 
-            LoadTalkingHead();
+            if (th == null) LoadTalkingHead();
             int IDForm = Brain.DiscriminationGameGuessID(th, bmp, ImageFormat.Bmp, description, true);
         }
 
@@ -423,6 +429,11 @@ namespace GeomWorld
             else if (e.Control && e.KeyCode == Keys.U)
             {
                 MakeGuess();
+                e.SuppressKeyPress = true;
+            }
+            else if(e.Control && e.KeyCode == Keys.I)
+            {
+                LoadTalkingHead();
                 e.SuppressKeyPress = true;
             }
         }
