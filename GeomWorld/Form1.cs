@@ -25,6 +25,7 @@ namespace GeomWorld
     {
         TalkingHead th = null;
         string description = "";
+        Bitmap image = null;
         public Form1()
         {
             InitializeComponent();
@@ -226,16 +227,23 @@ namespace GeomWorld
 
             if (saveFileDialog1.FileName != "")
             {
+                Bitmap bmp;
                 switch (saveFileDialog1.FilterIndex)
                 {
                     case 1:
-                        PictureBox1.Image.Save(saveFileDialog1.FileName, ImageFormat.Jpeg);
+                        bmp = image;
+                        if (bmp == null) PictureBox1.Image.Save(saveFileDialog1.FileName, ImageFormat.Jpeg);
+                        else bmp.Save(saveFileDialog1.FileName, ImageFormat.Jpeg);
                         break;
                     case 2:
-                        PictureBox1.Image.Save(saveFileDialog1.FileName, ImageFormat.Bmp);
+                        bmp = image;
+                        if (bmp == null) PictureBox1.Image.Save(saveFileDialog1.FileName, ImageFormat.Bmp);
+                        else bmp.Save(saveFileDialog1.FileName, ImageFormat.Bmp);
                         break;
                     case 3:
-                        PictureBox1.Image.Save(saveFileDialog1.FileName, ImageFormat.Png);
+                        bmp = image;
+                        if (bmp == null) PictureBox1.Image.Save(saveFileDialog1.FileName, ImageFormat.Png);
+                        else bmp.Save(saveFileDialog1.FileName, ImageFormat.Png);
                         break;
                 }
             }
@@ -261,7 +269,9 @@ namespace GeomWorld
                     format = ImageFormat.Png;
                     break;
             }
-            PictureBox1.Image.Save(fileName, format);
+            Bitmap bmp = image;
+            if (bmp == null) PictureBox1.Image.Save(fileName, format);
+            else bmp.Save(fileName, format);
             for (int i = 1; i < number; i++)
             {
                 fileName = directory + i + formatStr;
@@ -328,7 +338,13 @@ namespace GeomWorld
 
         private void ShowSegmentation()
         {
-            Bitmap bmp = DrawControlToBitmap(PictureBox1);
+            Bitmap bmp = image;
+            if (bmp == null)
+            {
+                bmp = DrawControlToBitmap(PictureBox1);
+                image = bmp;
+            }
+
             List<TalkingHeads.DataStructures.Form> forms = Eyes.FindForms(bmp, ImageFormat.Bmp);
             Graphics g = Graphics.FromImage(bmp);
             g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
@@ -344,7 +360,7 @@ namespace GeomWorld
                 Point pt = form.GetCenter();
                 Rectangle rect = new Rectangle(pt.X - (Configuration.SizeOfIdRectangle/2), pt.Y - (Configuration.SizeOfIdRectangle / 2), Configuration.SizeOfIdRectangle, Configuration.SizeOfIdRectangle);
                 g.FillRectangle(Brushes.White, rect);
-                g.DrawString("" + form.ID, new Font("Tahoma", 10), Brushes.Black, rect, format);
+                g.DrawString("" + form.ID, new Font("Tahoma", 16), Brushes.Black, rect, format);
             }
 
             PictureBox1.Image = bmp;
@@ -374,7 +390,8 @@ namespace GeomWorld
 
         private void DescribeForm()
         {
-            Bitmap bmp = DrawControlToBitmap(PictureBox1);
+            Bitmap bmp = image;
+            if (bmp == null) bmp = DrawControlToBitmap(PictureBox1);
 
             if (th == null) LoadTalkingHead();
             string guess = Brain.DiscriminationGameDescription(th, bmp, ImageFormat.Bmp, true);
@@ -383,7 +400,8 @@ namespace GeomWorld
 
         private void MakeGuess()
         {
-            Bitmap bmp = DrawControlToBitmap(PictureBox1);
+            Bitmap bmp = image;
+            if (bmp == null) bmp = DrawControlToBitmap(PictureBox1);
 
             if (th == null) LoadTalkingHead();
             int IDForm = Brain.DiscriminationGameGuessID(th, bmp, ImageFormat.Bmp, description, true);

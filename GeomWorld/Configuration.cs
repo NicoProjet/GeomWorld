@@ -9,6 +9,6 @@ namespace GeomWorld
     public class Configuration
     {
         public static readonly bool PrintForms = false;
-        public static readonly int SizeOfIdRectangle = 14;
+        public static readonly int SizeOfIdRectangle = 22;
     }
 }
