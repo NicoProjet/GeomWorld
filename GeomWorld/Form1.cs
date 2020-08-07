@@ -117,11 +117,11 @@ namespace GeomWorld
                 Color color;
                 if (TalkingHeads.Configuration.GrayScale)
                 {
-                    color = Color.FromArgb(rand.Next(0, 255), 0, 0, 0);
+                    color = Color.FromArgb(rand.Next(TalkingHeads.Configuration.GrayScaleMinAlpha, 255), 0, 0, 0);
                 }
                 else
                 {
-                    color = Color.FromArgb(rand.Next(255, 255), rand.Next(0, 255), rand.Next(0, 255), rand.Next(0, 255));
+                    color = Color.FromArgb(255, rand.Next(0, 255), rand.Next(0, 255), rand.Next(0, 255));
                 }
                 SolidBrush brush = new SolidBrush(color);
 
@@ -159,6 +159,7 @@ namespace GeomWorld
                 }
             }
             PictureBox1.Image = drawing;
+            image = drawing.Clone(new Rectangle(0, 0, drawing.Width, drawing.Height), drawing.PixelFormat);
 
             if (Configuration.PrintForms)
             {
@@ -176,7 +177,11 @@ namespace GeomWorld
             OpenFileDialog1.Filter = "JPeg Image|*.jpg|Bitmap Image|*.bmp|Png Image|*.png";
             OpenFileDialog1.Title = "Load an Image File";
             OpenFileDialog1.ShowDialog();
-            if (OpenFileDialog1.FileName != "") PictureBox1.Image = Image.FromFile(OpenFileDialog1.FileName);
+            if (OpenFileDialog1.FileName != "")
+            {
+                PictureBox1.Image = Image.FromFile(OpenFileDialog1.FileName);
+                image = ((Bitmap) PictureBox1.Image).Clone(new Rectangle(0, 0, PictureBox1.Image.Width, PictureBox1.Image.Height), PictureBox1.Image.PixelFormat);
+            }
         }
 
         private void PictureBox1_Paint(object sender, PaintEventArgs e)
@@ -341,8 +346,7 @@ namespace GeomWorld
             Bitmap bmp = image;
             if (bmp == null)
             {
-                bmp = DrawControlToBitmap(PictureBox1);
-                image = bmp;
+                image = DrawControlToBitmap(PictureBox1);
             }
 
             List<TalkingHeads.DataStructures.Form> forms = Eyes.FindForms(bmp, ImageFormat.Bmp);
