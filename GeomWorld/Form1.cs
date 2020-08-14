@@ -424,6 +424,9 @@ namespace GeomWorld
                 {
                     if (print) Console.Write(th.Name + " could not recognize all the words.");
                     Brain.EnterCorrectForm(th, ms, bmp.Width, bmp.Height, description, lastSelect);
+                    //if (inactive_th != null) inactive_th.UpdateScore(ProcessingMemorySpeaker, false, false);
+                    th.Erode();
+                    inactive_th.Erode();
                 }
                 else if (IDForm < 0)
                 {
@@ -435,6 +438,7 @@ namespace GeomWorld
                     }
                     if (print) Console.Write("\n");
                     Brain.EnterCorrectForm(th, ms, bmp.Width, bmp.Height, description, lastSelect);
+                    IncorrectGuess(print);
                 }
                 else if (IDForm == lastSelect)
                 {
@@ -453,15 +457,15 @@ namespace GeomWorld
 
         private void CorrectGuess(bool print = true)
         {
-            th.UpdateScore(ProcessingMemoryGuesser, true);
-            if (inactive_th != null) inactive_th.UpdateScore(ProcessingMemorySpeaker, true);
+            th.UpdateScore(ProcessingMemoryGuesser, true, true);
+            if (inactive_th != null) inactive_th.UpdateScore(ProcessingMemorySpeaker, true, false);
             if (print) Console.WriteLine("Last guess was correct, scores have been updated accordingly.");
         }
 
         private void IncorrectGuess(bool print = true)
         {
-            th.UpdateScore(ProcessingMemoryGuesser, false);
-            if (inactive_th != null) inactive_th.UpdateScore(ProcessingMemorySpeaker, false);
+            th.UpdateScore(ProcessingMemoryGuesser, false, true);
+            if (inactive_th != null) inactive_th.UpdateScore(ProcessingMemorySpeaker, false, false);
             if (print) Console.WriteLine("Last guess was incorrect, scores have been updated accordingly.");
         }
 
@@ -572,7 +576,8 @@ namespace GeomWorld
             if (inactive_th == null) inactive_th = new TalkingHead("Borderlands", true);
             for (int i = 0; i < numberOfTests; i++)
             {
-                if (printDetails) Console.WriteLine("Game n°" + i);
+                //if (printDetails) Console.WriteLine("Game n°" + i);
+                //Console.WriteLine("Game n°" + i);
                 PictureBox1_Render(); // new image
                 if (printDetails) Console.WriteLine("Active th: " + th.Name);
                 DescribeForm(print); // description
@@ -653,9 +658,9 @@ namespace GeomWorld
 
         private void GetDataForGraphGames()
         {
-            for (int i = 0; i < 20; i++)
+            for (int i = 0; i < 40; i++)
             {
-                Console.Write("Game n°" + i + ": ");
+                Console.Write("Batch " + i + " -> Games " + (i * 50) + " to " + (50 + (i*50)) + ": ");
                 DoMultipleGames(50, false, false);
             }
         }
