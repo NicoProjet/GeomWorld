@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
@@ -11,6 +12,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using TalkingHeads;
 using TalkingHeads.BodyParts;
+using dt = TalkingHeads.DataStructures;
 
 namespace GeomWorld
 {
@@ -23,14 +25,7 @@ namespace GeomWorld
     
     public partial class Form1 : Form
     {
-        TalkingHead th = null;
-        TalkingHead inactive_th = null;
-        string description = "";
-        Bitmap image = null;
-        List<TalkingHeads.DataStructures.DiscriminationTree.Guess> ProcessingMemoryGuesser = new List<TalkingHeads.DataStructures.DiscriminationTree.Guess>();
-        List<TalkingHeads.DataStructures.DiscriminationTree.Guess> ProcessingMemorySpeaker = new List<TalkingHeads.DataStructures.DiscriminationTree.Guess>();
-        int lastSelect = -10;
-        bool lastGuessWasCorrect = false;
+        SimulationManager manager = new SimulationManager();
         public Form1()
         {
             InitializeComponent();
@@ -164,16 +159,7 @@ namespace GeomWorld
                 }
             }
             PictureBox1.Image = drawing;
-            image = drawing.Clone(new Rectangle(0, 0, drawing.Width, drawing.Height), drawing.PixelFormat);
-
-            if (Configuration.PrintForms)
-            {
-                Console.WriteLine("Numer of forms: " + containers.Count());
-                foreach (Rectangle r in containers)
-                {
-                    Console.WriteLine("x = " + r.X + "  |  y = " + r.Y + "  |  width = " + r.Width + "  |  height = " + r.Height);
-                }
-            }
+            manager.image = drawing.Clone(new Rectangle(0, 0, drawing.Width, drawing.Height), drawing.PixelFormat);
         }
 
         private void PictureBox1_LoadImage()
@@ -185,7 +171,7 @@ namespace GeomWorld
             if (OpenFileDialog1.FileName != "")
             {
                 PictureBox1.Image = Image.FromFile(OpenFileDialog1.FileName);
-                image = ((Bitmap) PictureBox1.Image).Clone(new Rectangle(0, 0, PictureBox1.Image.Width, PictureBox1.Image.Height), PictureBox1.Image.PixelFormat);
+                manager.image = ((Bitmap) PictureBox1.Image).Clone(new Rectangle(0, 0, PictureBox1.Image.Width, PictureBox1.Image.Height), PictureBox1.Image.PixelFormat);
             }
         }
 
@@ -241,17 +227,17 @@ namespace GeomWorld
                 switch (saveFileDialog1.FilterIndex)
                 {
                     case 1:
-                        bmp = image;
+                        bmp = manager.image;
                         if (bmp == null) PictureBox1.Image.Save(saveFileDialog1.FileName, ImageFormat.Jpeg);
                         else bmp.Save(saveFileDialog1.FileName, ImageFormat.Jpeg);
                         break;
                     case 2:
-                        bmp = image;
+                        bmp = manager.image;
                         if (bmp == null) PictureBox1.Image.Save(saveFileDialog1.FileName, ImageFormat.Bmp);
                         else bmp.Save(saveFileDialog1.FileName, ImageFormat.Bmp);
                         break;
                     case 3:
-                        bmp = image;
+                        bmp = manager.image;
                         if (bmp == null) PictureBox1.Image.Save(saveFileDialog1.FileName, ImageFormat.Png);
                         else bmp.Save(saveFileDialog1.FileName, ImageFormat.Png);
                         break;
@@ -279,7 +265,7 @@ namespace GeomWorld
                     format = ImageFormat.Png;
                     break;
             }
-            Bitmap bmp = image;
+            Bitmap bmp = manager.image;
             if (bmp == null) PictureBox1.Image.Save(fileName, format);
             else bmp.Save(fileName, format);
             for (int i = 1; i < number; i++)
@@ -348,13 +334,13 @@ namespace GeomWorld
 
         private void ShowSegmentation()
         {
-            Bitmap bmp = image;
+            Bitmap bmp = manager.image;
             if (bmp == null)
             {
-                image = DrawControlToBitmap(PictureBox1);
+                manager.image = DrawControlToBitmap(PictureBox1);
             }
 
-            List<TalkingHeads.DataStructures.Form> forms = Eyes.FindForms(bmp, ImageFormat.Bmp);
+            List<dt.Form> forms = Eyes.FindForms(bmp, ImageFormat.Bmp);
             Graphics g = Graphics.FromImage(bmp);
             g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
             g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
@@ -364,10 +350,10 @@ namespace GeomWorld
             StringFormat format = new StringFormat();
             format.Alignment = StringAlignment.Center;
             format.LineAlignment = StringAlignment.Center;
-            foreach (TalkingHeads.DataStructures.Form form in forms)
+            foreach (dt.Form form in forms)
             {
                 Point pt = form.GetCenter();
-                Rectangle rect = new Rectangle(pt.X - (Configuration.SizeOfIdRectangle/2), pt.Y - (Configuration.SizeOfIdRectangle / 2), Configuration.SizeOfIdRectangle, Configuration.SizeOfIdRectangle);
+                Rectangle rect = new Rectangle(pt.X - (TalkingHeads.Configuration.SizeOfIdRectangle/2), pt.Y - (TalkingHeads.Configuration.SizeOfIdRectangle / 2), TalkingHeads.Configuration.SizeOfIdRectangle, TalkingHeads.Configuration.SizeOfIdRectangle);
                 g.FillRectangle(Brushes.White, rect);
                 g.DrawString("" + form.ID, new Font("Tahoma", 16), Brushes.Black, rect, format);
             }
@@ -375,229 +361,9 @@ namespace GeomWorld
             PictureBox1.Image = bmp;
         }
 
-        private void LoadTalkingHead()
+        private void GenerateCanvas()
         {
-            if (th == null)
-            {
-                th = new TalkingHead("Zero", true);
-            }
-            Memory.LoadTalkingHead(th);
-            Console.WriteLine("Loaded Talking Head '" + th.Name + "'");
-        }
-
-        private void SaveTalkingHead()
-        {
-            if (th != null)
-            {
-                Memory.SaveTalkingHead(th);
-            }
-            Console.WriteLine("Saved Talking Head '" + th.Name + "'");
-        }
-
-        private void DescribeForm(bool print = true)
-        {
-            Bitmap bmp = image;
-            if (bmp == null) bmp = DrawControlToBitmap(PictureBox1);
-
-            if (th == null) LoadTalkingHead();
-            using (MemoryStream ms = new MemoryStream())
-            {
-                bmp.Save(ms, ImageFormat.Bmp);
-                ProcessingMemorySpeaker.Clear();
-                string guess = Brain.DiscriminationGameDescription(th, ms, bmp.Width, bmp.Height, out lastSelect, ProcessingMemorySpeaker, print);
-                description = guess;
-            }
-        }
-
-        private void MakeGuess(bool print = true)
-        {
-            Bitmap bmp = image;
-            if (bmp == null) bmp = DrawControlToBitmap(PictureBox1);
-
-            if (th == null) LoadTalkingHead();
-            using (MemoryStream ms = new MemoryStream())
-            {
-                bmp.Save(ms, ImageFormat.Bmp);
-                ProcessingMemoryGuesser.Clear();
-                int IDForm = Brain.DiscriminationGameGuessID(th, ms, bmp.Width, bmp.Height, description, ProcessingMemoryGuesser, print);
-                if (IDForm == -2)
-                {
-                    if (print) Console.Write(th.Name + " could not recognize all the words.");
-                    Brain.EnterCorrectForm(th, ms, bmp.Width, bmp.Height, description, lastSelect);
-                    //if (inactive_th != null) inactive_th.UpdateScore(ProcessingMemorySpeaker, false, false);
-                    th.Erode();
-                    inactive_th.Erode();
-                }
-                else if (IDForm < 0)
-                {
-                    lastGuessWasCorrect = false;
-                    if (print) Console.Write("I tried to find a form with ");
-                    foreach(TalkingHeads.DataStructures.DiscriminationTree.Guess item in ProcessingMemoryGuesser)
-                    {
-                        if (print) Console.Write(item.Node.Print() + " ");
-                    }
-                    if (print) Console.Write("\n");
-                    Brain.EnterCorrectForm(th, ms, bmp.Width, bmp.Height, description, lastSelect);
-                    IncorrectGuess(print);
-                }
-                else if (IDForm == lastSelect)
-                {
-                    lastGuessWasCorrect = true;
-                    CorrectGuess(print);
-                }
-                else
-                {
-                    lastGuessWasCorrect = false;
-                    IncorrectGuess(print);
-                    Brain.EnterCorrectForm(th, ms, bmp.Width, bmp.Height, description, lastSelect);
-                }
-            }
-            //int IDForm = Brain.DiscriminationGameGuessID(th, bmp, ImageFormat.Bmp, description, true);
-        }
-
-        private void CorrectGuess(bool print = true)
-        {
-            th.UpdateScore(ProcessingMemoryGuesser, true, true);
-            if (inactive_th != null) inactive_th.UpdateScore(ProcessingMemorySpeaker, true, false);
-            if (print) Console.WriteLine("Last guess was correct, scores have been updated accordingly.");
-        }
-
-        private void IncorrectGuess(bool print = true)
-        {
-            th.UpdateScore(ProcessingMemoryGuesser, false, true);
-            if (inactive_th != null) inactive_th.UpdateScore(ProcessingMemorySpeaker, false, false);
-            if (print) Console.WriteLine("Last guess was incorrect, scores have been updated accordingly.");
-        }
-
-        private void DoMultipleTests(int numberOfTests, bool print, bool printDetails = true)
-        {
-            int CorrectCounter = 0;
-            for (int i = 0; i<numberOfTests; i++)
-            {
-                if (printDetails) Console.WriteLine("Test n°" + i);
-                PictureBox1_Render(); // new image
-                DescribeForm(print); // description
-                MakeGuess(print); // Guess
-                if (lastGuessWasCorrect)
-                {
-                    CorrectCounter++;
-                }
-            }
-
-            if (printDetails) Console.WriteLine("\n\n\n ---- RESULTS ---- \n");
-            Console.WriteLine("" + CorrectCounter + " tests were successful, percentage of success = " +(100 * ((double) CorrectCounter / (double) numberOfTests)) + "%");
-        }
-
-        private void SingleTestAndSave(bool print = true)
-        {
-            PictureBox1_Render(); // new image
-            DescribeForm(print); // description
-            MakeGuess(print); // Guess
-            if (lastGuessWasCorrect)
-            {
-                CorrectGuess(print);
-            }
-            else
-            {
-                IncorrectGuess(print);
-            }
-            SaveTalkingHead();
-        }
-
-        private void MultipleTests()
-        {
-            Form dialog = new Form()
-            {
-                Width = 330,
-                Height = 150,
-                Text = "Do n Tests.",
-            };
-            Label inputLabel = new Label()
-            {
-                Left = 50,
-                Top = 20,
-                Text = "Number of tests",
-            };
-            NumericUpDown input = new NumericUpDown()
-            {
-                Left = 150,
-                Top = 20,
-                Width = 100,
-                Value = 50,
-                Maximum = 250,
-            };
-            Label printProcessLabel = new Label()
-            {
-                Left = 50,
-                Top = 50,
-                Text = "Print the process",
-            };
-            CheckBox printProcess = new CheckBox() 
-            {
-                Left = 150,
-                Top = 50,
-                AutoCheck = true,
-                Checked = true,
-            };
-
-            Button confirmBtn = new Button()
-            {
-                Text = "Go",
-                Left = 120,
-                Width = 50,
-                Top = 80,
-            }; 
-            confirmBtn.Click += (sender, e) => {
-                DoMultipleTests((int)input.Value, printProcess.Checked);
-                dialog.Close();
-            };
-
-            dialog.Controls.Add(inputLabel);
-            dialog.Controls.Add(input);
-            dialog.Controls.Add(printProcessLabel);
-            dialog.Controls.Add(printProcess);
-            dialog.Controls.Add(confirmBtn);
-            dialog.ShowDialog();
-        }
-
-        private void GetDataForGraph()
-        {
-            for (int i=0; i<20; i++)
-            {
-                Console.Write("Test n°" + i + ": ");
-                DoMultipleTests(50, false, false);
-            }
-        }
-
-        private void DoMultipleGames(int numberOfTests, bool print, bool printDetails = true)
-        {
-            int CorrectCounter = 0;
-            if (th == null) th = new TalkingHead("Zero", true);
-            if (inactive_th == null) inactive_th = new TalkingHead("Borderlands", true);
-            for (int i = 0; i < numberOfTests; i++)
-            {
-                //if (printDetails) Console.WriteLine("Game n°" + i);
-                //Console.WriteLine("Game n°" + i);
-                PictureBox1_Render(); // new image
-                if (printDetails) Console.WriteLine("Active th: " + th.Name);
-                DescribeForm(print); // description
-
-                TalkingHead tmp = th;
-                th = inactive_th;
-                inactive_th = tmp;
-
-                if (printDetails) Console.WriteLine("Active th: " + th.Name);
-                MakeGuess(print); // Guess
-                if (lastGuessWasCorrect)
-                {
-                    CorrectCounter++;
-                }
-            }
-
-            if (printDetails) Console.WriteLine("\n\n\n ---- RESULTS ---- \n");
-            Console.WriteLine("" + CorrectCounter + " tests were successful, percentage of success = " + (100 * ((double)CorrectCounter / (double)numberOfTests)) + "%");
-            Memory.SaveTalkingHead(th);
-            Memory.SaveTalkingHead(inactive_th);
+            PictureBox1_Render();
         }
 
         private void MultipleGames()
@@ -656,13 +422,148 @@ namespace GeomWorld
             dialog.ShowDialog();
         }
 
+        private void MultipleTests()
+        {
+            Form dialog = new Form()
+            {
+                Width = 330,
+                Height = 150,
+                Text = "Do n Tests.",
+            };
+            Label inputLabel = new Label()
+            {
+                Left = 50,
+                Top = 20,
+                Text = "Number of tests",
+            };
+            NumericUpDown input = new NumericUpDown()
+            {
+                Left = 150,
+                Top = 20,
+                Width = 100,
+                Value = 50,
+                Maximum = 250,
+            };
+            Label printProcessLabel = new Label()
+            {
+                Left = 50,
+                Top = 50,
+                Text = "Print the process",
+            };
+            CheckBox printProcess = new CheckBox()
+            {
+                Left = 150,
+                Top = 50,
+                AutoCheck = true,
+                Checked = true,
+            };
+
+            Button confirmBtn = new Button()
+            {
+                Text = "Go",
+                Left = 120,
+                Width = 50,
+                Top = 80,
+            };
+            confirmBtn.Click += (sender, e) => {
+                DoMultipleTests((int)input.Value, printProcess.Checked);
+                dialog.Close();
+            };
+
+            dialog.Controls.Add(inputLabel);
+            dialog.Controls.Add(input);
+            dialog.Controls.Add(printProcessLabel);
+            dialog.Controls.Add(printProcess);
+            dialog.Controls.Add(confirmBtn);
+            dialog.ShowDialog();
+        }
+
+        private void DoMultipleTests(int numberOfTests, bool print, bool printDetails = true)
+        {
+            int CorrectCounter = 0;
+            for (int i = 0; i < numberOfTests; i++)
+            {
+                if (printDetails) Console.WriteLine("Test n°" + i);
+                GenerateCanvas();
+                manager.DescribeForm(print); // description
+                manager.MakeGuess(print); // Guess
+                if (manager.lastGuessWasCorrect)
+                {
+                    CorrectCounter++;
+                }
+            }
+
+            if (printDetails) Console.WriteLine("\n\n\n ---- RESULTS ---- \n");
+            Console.WriteLine("" + CorrectCounter + " tests were successful, percentage of success = " + (100 * ((double)CorrectCounter / (double)numberOfTests)) + "%");
+        }
+
+        private void GetDataForGraph()
+        {
+            for (int i = 0; i < 20; i++)
+            {
+                Console.Write("Test n°" + i + ": ");
+                DoMultipleTests(50, false, false);
+            }
+        }
+
+        private void DoMultipleGames(int numberOfTests, bool print, bool printDetails = true)
+        {
+            int CorrectCounter = 0;
+            if (manager.th == null) manager.th = new TalkingHead("Zero", true);
+            if (manager.inactive_th == null) manager.inactive_th = new TalkingHead("Borderlands", true);
+            for (int i = 0; i < numberOfTests; i++)
+            {
+                GenerateCanvas();
+                CorrectCounter += manager.DiscriminationGame(print, printDetails);
+            }
+
+            if (printDetails) Console.WriteLine("\n\n\n ---- RESULTS ---- \n");
+            Console.WriteLine("" + CorrectCounter + " tests were successful, percentage of success = " + (100 * ((double)CorrectCounter / (double)numberOfTests)) + "%");
+            Memory.SaveTalkingHead(manager.th);
+            Memory.SaveTalkingHead(manager.inactive_th);
+        }
+
         private void GetDataForGraphGames()
         {
             for (int i = 0; i < 40; i++)
             {
-                Console.Write("Batch " + i + " -> Games " + (i * 50) + " to " + (50 + (i*50)) + ": ");
+                Console.Write("Batch " + i + " -> Games " + (i * 50) + " to " + (50 + (i * 50)) + ": ");
                 DoMultipleGames(50, false, false);
             }
+        }
+
+        private void DoMultipleGamesMultipleGuessers(int numberOfTests, bool print, bool printDetails = true)
+        {
+            if (manager.guessersList.Count() < 3) return;
+            int TotalCorrectCounter = 0;
+
+            for (int i = 0; i < numberOfTests; i++)
+            {
+                PictureBox1_Render(); // new image
+                TotalCorrectCounter += manager.GameWithMultipleGuessers(i, print, printDetails);
+            }
+
+            if (printDetails) Console.WriteLine("\n\n\n ---- RESULTS ---- \n");
+            Console.WriteLine("" + TotalCorrectCounter + " tests were successful, percentage of success = " + (100 * ((double)TotalCorrectCounter / (double)numberOfTests)) + "%");
+            manager.SaveGuessersList();
+        }
+
+        private void GetDataForGraphGamesMultipleGuessers()
+        {
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+
+            manager.InitGuessersList();
+
+            for (int i = 0; i < 40; i++)
+            {
+                Console.Write("Batch " + i + " -> Games " + (i * 50) + " to " + (50 + (i * 50)) + ": ");
+                DoMultipleGamesMultipleGuessers(50, false, false);
+            }
+
+            Console.WriteLine("Elapsed time = " + sw.Elapsed);
+            Console.WriteLine("Elapsed ms = " + sw.ElapsedMilliseconds);
+            sw.Stop();
         }
 
         private void Form1_KeyDown(object sender, KeyEventArgs e)
@@ -694,32 +595,33 @@ namespace GeomWorld
             }
             else if (e.Control && e.KeyCode == Keys.T)
             {
-                DescribeForm();
+                if (manager.image == null) manager.image = DrawControlToBitmap(PictureBox1);
+                manager.DescribeForm();
                 e.SuppressKeyPress = true;
             }
             else if (e.Control && e.KeyCode == Keys.Y)
             {
-                SaveTalkingHead();
+                manager.SaveTalkingHead();
                 e.SuppressKeyPress = true;
             }
             else if (e.Control && e.KeyCode == Keys.U)
             {
-                MakeGuess();
+                manager.MakeGuess();
                 e.SuppressKeyPress = true;
             }
             else if (e.Control && e.KeyCode == Keys.I)
             {
-                LoadTalkingHead();
+                manager.LoadTalkingHead();
                 e.SuppressKeyPress = true;
             }
             else if (e.Control && e.KeyCode == Keys.C)
             {
-                CorrectGuess();
+                manager.CorrectGuess();
                 e.SuppressKeyPress = true;
             }
             else if (e.Control && e.KeyCode == Keys.V)
             {
-                IncorrectGuess();
+                manager.IncorrectGuess();
                 e.SuppressKeyPress = true;
             }
             else if (e.Control && e.KeyCode == Keys.G)
@@ -729,7 +631,8 @@ namespace GeomWorld
             }
             else if (e.Control && e.KeyCode == Keys.F)
             {
-                SingleTestAndSave();
+                GenerateCanvas();
+                manager.SingleTestAndSave();
                 e.SuppressKeyPress = true;
             }
             else if (e.Control && e.KeyCode == Keys.H)
@@ -753,8 +656,11 @@ namespace GeomWorld
                 DoMultipleGames(1, true, true);
                 e.SuppressKeyPress = true;
             }
+            else if (e.Control && e.KeyCode == Keys.A)
+            {
+                GetDataForGraphGamesMultipleGuessers();
+                e.SuppressKeyPress = true;
+            }
         }
-
-        
     }
 }
