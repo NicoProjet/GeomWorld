@@ -539,7 +539,7 @@ namespace GeomWorld
 
             for (int i = 0; i < numberOfTests; i++)
             {
-                PictureBox1_Render(); // new image
+                GenerateCanvas(); // new image
                 TotalCorrectCounter += manager.GameWithMultipleGuessers(i, print, printDetails);
             }
 
@@ -559,6 +559,41 @@ namespace GeomWorld
             {
                 Console.Write("Batch " + i + " -> Games " + (i * 50) + " to " + (50 + (i * 50)) + ": ");
                 DoMultipleGamesMultipleGuessers(50, false, false);
+            }
+
+            Console.WriteLine("Elapsed time = " + sw.Elapsed);
+            Console.WriteLine("Elapsed ms = " + sw.ElapsedMilliseconds);
+            sw.Stop();
+        }
+
+        private void DoMultipleGamesoneGuesserFromPopulation(int numberOfGames, bool print, bool printDetails = true)
+        {
+            if (manager.guessersList.Count() < 3) return;
+            int correctCounter = 0;
+
+            for (int i = 0; i < numberOfGames; i++)
+            {
+                GenerateCanvas(); // new image
+                correctCounter += manager.GamesOneGuesserFromPopulation(i, print, printDetails);
+            }
+
+            if (printDetails) Console.WriteLine("\n\n\n ---- RESULTS ---- \n");
+            Console.WriteLine("" + correctCounter + " tests were successful, percentage of success = " + (100 * ((double)correctCounter / (double)numberOfGames)) + "%");
+            Console.WriteLine("Lexicon size = " + manager.AverageLexiconSize());
+            manager.SaveGuessersList();
+        }
+
+        private void TwoAgentsGamesInPopulation()
+        {
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+
+            manager.InitGuessersList();
+
+            for (int i = 0; i < 40; i++)
+            {
+                Console.Write("Batch " + i + " -> Games " + (i * 50) + " to " + (50 + (i * 50)) + ": ");
+                DoMultipleGamesoneGuesserFromPopulation(50, false, false);
             }
 
             Console.WriteLine("Elapsed time = " + sw.Elapsed);
@@ -659,6 +694,11 @@ namespace GeomWorld
             else if (e.Control && e.KeyCode == Keys.A)
             {
                 GetDataForGraphGamesMultipleGuessers();
+                e.SuppressKeyPress = true;
+            }
+            else if (e.Control && e.KeyCode == Keys.Z)
+            {
+                TwoAgentsGamesInPopulation();
                 e.SuppressKeyPress = true;
             }
         }

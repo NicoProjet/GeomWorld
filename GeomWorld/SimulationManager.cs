@@ -228,7 +228,47 @@ namespace GeomWorld
                 return 0;
             }
         }
-        
+
+        public int GamesOneGuesserFromPopulation(int i, bool print, bool printDetails = true)
+        {
+            int index = Configuration.seed.Next(guessersList.Count());
+            TalkingHead speaker = guessersList.ElementAt(index);
+            guessersList.Remove(speaker);
+
+            index = Configuration.seed.Next(guessersList.Count());
+            TalkingHead guesser = guessersList.ElementAt(index);
+            //guessersList.Remove(guesser);
+
+            if (printDetails) Console.WriteLine("Game n°" + i);
+            if (printDetails) Console.WriteLine("Speaker: " + speaker.Name);
+            DescribeForm(print, speaker); // description
+
+            if (printDetails) Console.WriteLine("guesser: " + guesser.Name);
+            MakeGuess(print, guesser); // Guess
+
+            if (lastGuessWasCorrect)
+            {
+                CorrectGuess(speaker, ProcessingMemorySpeaker, false);
+                guessersList.Add(speaker);
+                return 1;
+            }
+            else
+            {
+                IncorrectGuess(speaker, ProcessingMemorySpeaker, false);
+                guessersList.Add(speaker);
+                return 0;
+            }
+        }
+
+        public int AverageLexiconSize()
+        {
+            int totalLexiconSize = 0;
+            foreach(TalkingHead _th in guessersList)
+            {
+                totalLexiconSize += _th.LexiconSize();
+            }
+            return totalLexiconSize / guessersList.Count();
+        }
 
         public void SingleTestAndSave(bool print = true)
         {
