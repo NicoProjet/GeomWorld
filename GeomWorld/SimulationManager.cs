@@ -21,6 +21,7 @@ namespace GeomWorld
         public TalkingHead th = null;
         public TalkingHead inactive_th = null;
         public List<TalkingHead> guessersList = new List<TalkingHead>();
+        public List<TalkingHead> population = new List<TalkingHead>();
         public List<List<dt.DiscriminationTree.Guess>> ProcessingMemoryGuessers = new List<List<dt.DiscriminationTree.Guess>>();
         public string description = "";
         public Bitmap image = null;
@@ -39,6 +40,31 @@ namespace GeomWorld
             guessersList.Add(new TalkingHead("Robert", true));
             guessersList.Add(new TalkingHead("Siren", true));
             guessersList.Add(new TalkingHead("Tess", true));
+        }
+
+        public void InitBigPopulation()
+        {
+            population.Clear();
+            population.Add(new TalkingHead("a1", true));
+            population.Add(new TalkingHead("a2", true));
+            population.Add(new TalkingHead("a3", true));
+            population.Add(new TalkingHead("a4", true));
+            population.Add(new TalkingHead("a5", true));
+            population.Add(new TalkingHead("a6", true));
+            population.Add(new TalkingHead("a7", true));
+            population.Add(new TalkingHead("a8", true));
+            population.Add(new TalkingHead("a9", true));
+            population.Add(new TalkingHead("a10", true));
+            population.Add(new TalkingHead("a11", true));
+            population.Add(new TalkingHead("a12", true));
+            population.Add(new TalkingHead("a13", true));
+            population.Add(new TalkingHead("a14", true));
+            population.Add(new TalkingHead("a15", true));
+            population.Add(new TalkingHead("a16", true));
+            population.Add(new TalkingHead("a17", true));
+            population.Add(new TalkingHead("a18", true));
+            population.Add(new TalkingHead("a19", true));
+            population.Add(new TalkingHead("a20", true));
         }
         public void LoadTalkingHead()
         {
@@ -195,12 +221,15 @@ namespace GeomWorld
             return 0;
         }
         
-        public int GameWithMultipleGuessers(int i, bool print, bool printDetails = true)
+        public int GameWithMultipleGuessers(int i, bool print, bool printDetails = true, bool setSpeaker = false, TalkingHead speaker = null)
         {
             int CurrentGameCorrectCounter = 0;
             int index = TalkingHeads.Configuration.seed.Next(guessersList.Count());
-            TalkingHead speaker = guessersList.ElementAt(index);
-            guessersList.Remove(speaker);
+            if (!setSpeaker)
+            {
+                speaker = guessersList.ElementAt(index);
+                guessersList.Remove(speaker);
+            }
 
             if (printDetails) Console.WriteLine("Game n°" + i);
             if (printDetails) Console.WriteLine("Speaker: " + speaker.Name);
@@ -218,13 +247,13 @@ namespace GeomWorld
             if (CurrentGameCorrectCounter > ((double)guessersList.Count() / 2))
             {
                 CorrectGuess(speaker, ProcessingMemorySpeaker, false);
-                guessersList.Add(speaker);
+                if (!setSpeaker) guessersList.Add(speaker);
                 return 1;
             }
             else
             {
                 IncorrectGuess(speaker, ProcessingMemorySpeaker, false);
-                guessersList.Add(speaker);
+                if (!setSpeaker) guessersList.Add(speaker);
                 return 0;
             }
         }
@@ -283,6 +312,29 @@ namespace GeomWorld
                 IncorrectGuess(print);
             }
             SaveTalkingHead();
+        }
+
+        public void Shuffle<T>(IList<T> list)
+        {
+            int n = list.Count;
+            while (n > 1)
+            {
+                n--;
+                int k = Configuration.seed.Next(n + 1);
+                T value = list[k];
+                list[k] = list[n];
+                list[n] = value;
+            }
+        }
+
+        public void PickParticipantsFromPopulation()
+        {
+            guessersList.Clear();
+
+            int numberOfParticipants = Configuration.seed.Next(2, 21);
+            Shuffle(population);
+
+            guessersList.AddRange(population.Take(numberOfParticipants));
         }
     }
 }

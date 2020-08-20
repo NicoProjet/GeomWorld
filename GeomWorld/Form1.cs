@@ -601,6 +601,86 @@ namespace GeomWorld
             sw.Stop();
         }
 
+        private void StrangerMeetsPopulation()
+        {
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+
+            manager.InitGuessersList();
+            TalkingHead stranger = new TalkingHead("Stranger", true);
+            manager.guessersList.Add(stranger);
+
+            for (int i = 0; i < 40; i++)
+            {
+                Console.Write("Batch " + i + " -> Games " + (i * 50) + " to " + (50 + (i * 50)) + ": ");
+                int correctCounter = 0;
+                for (int j = 0; j < 50; j++)
+                {
+                    GenerateCanvas(); // new image
+                    correctCounter += manager.GameWithMultipleGuessers(j, false, false);
+                }
+                Console.WriteLine("" + correctCounter + " tests were successful, percentage of success = " + (100 * ((double)correctCounter / (double)50)) + "%");
+                manager.SaveGuessersList();
+            }
+
+            Console.WriteLine("Elapsed time = " + sw.Elapsed);
+            Console.WriteLine("Elapsed ms = " + sw.ElapsedMilliseconds);
+            sw.Stop();
+        }
+
+        private void SetSpeakerInPopulation()
+        {
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+
+            manager.InitGuessersList();
+            TalkingHead speaker = new TalkingHead("Erudite", true);
+
+            for (int i = 0; i < 40; i++)
+            {
+                Console.Write("Batch " + i + " -> Games " + (i * 50) + " to " + (50 + (i * 50)) + ": ");
+                int correctCounter = 0;
+                for (int j = 0; j < 50; j++)
+                {
+                    GenerateCanvas(); // new image
+                    correctCounter += manager.GameWithMultipleGuessers(j, false, false, true, speaker);
+                }
+                Console.WriteLine("" + correctCounter + " tests were successful, percentage of success = " + (100 * ((double)correctCounter / (double)50)) + "%");
+                manager.SaveGuessersList();
+                Memory.SaveTalkingHead(speaker);
+            }
+
+            Console.WriteLine("Elapsed time = " + sw.Elapsed);
+            Console.WriteLine("Elapsed ms = " + sw.ElapsedMilliseconds);
+            sw.Stop();
+        }
+
+        private void LifeInPopulationSimulation()
+        {
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+
+            manager.InitBigPopulation();
+
+            for (int i = 0; i < 40; i++)
+            {
+                Console.Write("Batch " + i + " -> Games " + (i * 50) + " to " + (50 + (i * 50)) + ": ");
+                int correctCounter = 0;
+                for (int j = 0; j < 50; j++)
+                {
+                    GenerateCanvas(); // new image
+                    manager.PickParticipantsFromPopulation();
+                    correctCounter += manager.GameWithMultipleGuessers(j, false, false);
+                }
+                Console.WriteLine("" + correctCounter + " tests were successful, percentage of success = " + (100 * ((double)correctCounter / (double)50)) + "%");
+                manager.SaveGuessersList();
+            }
+
+            Console.WriteLine("Elapsed time = " + sw.Elapsed);
+            Console.WriteLine("Elapsed ms = " + sw.ElapsedMilliseconds);
+            sw.Stop();
+        }
+
         private void Form1_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Control && e.KeyCode == Keys.S) // Ctrl+S
@@ -699,6 +779,21 @@ namespace GeomWorld
             else if (e.Control && e.KeyCode == Keys.Z)
             {
                 TwoAgentsGamesInPopulation();
+                e.SuppressKeyPress = true;
+            }
+            else if (e.Control && e.KeyCode == Keys.E)
+            {
+                StrangerMeetsPopulation();
+                e.SuppressKeyPress = true;
+            }
+            else if (e.Control && e.KeyCode == Keys.R)
+            {
+                SetSpeakerInPopulation();
+                e.SuppressKeyPress = true;
+            }
+            else if (e.Control && e.KeyCode == Keys.Q)
+            {
+                LifeInPopulationSimulation();
                 e.SuppressKeyPress = true;
             }
         }
